@@ -1,4 +1,4 @@
-# Python and Web Programming Practical 9
+# Python and Web Programming Practicals
 
 <!-- metadata (use pandoc) 
 % title: Python and Web Programming Practical 9
