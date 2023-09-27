@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %} 
+    Demo Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Demo Page</h1>
+    <p>Variable: {{ variable }}</p>
+    <p>Filter: {{ variable|upper }}</p>
+    <p>Loop:</p>
+    <ul>
+        {% for item in items %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+    <p>Control Structure:</p>
+    {% if user.is_authenticated %}
+        <p>Welcome, {{ user.username }}!</p>
+    {% else %}
+        <p>Welcome, new user!</p>
+    {% endif %}
+{% endblock %}
