@@ -6,6 +6,18 @@
 % date: September 28, 2023
 -->
 
+## Installation 
+1. Create a virtual environment
+```bash
+python -m venv env
+.\env\Scripts\Activate.ps1
+```
+
+2. Install from requirements.txt
+```bash
+pip install -r requirements.txt
+```
+
 ## Practical 9.1
 
 ## 1. Introduction to MVC Framework:
