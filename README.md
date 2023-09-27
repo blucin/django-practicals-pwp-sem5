@@ -521,5 +521,273 @@ urlpatterns = [
 
 ```bash
 mkdir apps/prac9_3
-django-admin prac9_3 apps/prac9_3
+django-admin startapp prac9_3 apps/prac9_3
+```
+
+### 9.2. Adding the app to the project
+
+```python
+INSTALLED_APPS = [
+    'prac9_1',
+    'prac9_2',
+    'prac9_3',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles'
+]
+```
+
+### 9.3. Create a model for the form
+
+- We will create a model called `FormData` that will store the username and email of the user. Go to `prac9_3/models.py` and add the following code
+
+```python
+from django.db import models
+
+# Create your models here.
+class FormData(models.Model):
+    username = models.CharField(max_length=100)
+    email = models.EmailField()
+
+    def __str__(self):
+        return self.username
+```
+
+### 9.4. Registering the model in prac9_3/admin.py
+
+```python
+from django.contrib import admin
+from .models import FormData
+
+# Register your models here.
+admin.site.register(FormData)
+```
+
+### 9.5. Make and run migrations
+
+```bash
+python manage.py makemigrations
+python manage.py migrate
+```
+
+### 9.6. Creating a template base.html from prac9_2
+
+```bash
+mkdir apps/prac9_3/templates
+cp apps/prac9_2/templates/base.html apps/prac9_3/templates/base.html
+```
+
+### 9.7. Creating a form html file
+
+```bash
+touch apps/prac9_3/templates/form.html
+```
+
+- Now we will add the following code to the `form.html` file to ask the user for username and email. On submit it will redirect us to a page `formData.html` to show the filled out form.
+
+`form.html`
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Form Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Form Page</h1>
+    <form action="{% url 'formData' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username">
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email">
+        <input type="submit" value="Submit">
+    </form>
+{% endblock %}
+```
+
+`formData.html`
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Form Data Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Form Data Page</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in formdata %}
+                <tr>
+                    <td>{{ data.username }}</td>
+                    <td>{{ data.email }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+```
+
+### 9.5. Create a `form.py` file
+
+```bash
+touch apps/prac9_3/form.py
+```
+
+- Now we will add the following code to the `form.py` file to create a form
+
+```python
+from django import forms
+
+class FormDataForm(forms.Form):
+    username = forms.CharField(max_length=100)
+    email = forms.EmailField()
+```
+
+### 9.6. Creating a view in prac9_3/views.py
+
+```python
+from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseRedirect
+from .form import FormDataForm
+from .models import FormData
+
+# Create your views here.
+def index(request):
+    return render(request, 'index.html')
+
+def form(request):
+    if request.method == 'POST':
+        form = FormDataForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/prac9_3/formData/')
+    else:
+        form = FormDataForm()
+    return render(request, 'form.html', {'form': form})
+
+def formData(request):
+    if request.method == 'POST':
+        form = FormDataForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            FormData.objects.create(username=username, email=email)
+            return HttpResponseRedirect('/prac9_3/formData/')
+    else:
+        form = FormDataForm()
+    return render(request, 'formData.html', {'formdata': FormData.objects.all()})
+```
+
+### 9.7. Creating a URL in prac9_3/urls.py
+
+- We will create a URL file for the prac9_3 app
+
+```bash
+touch apps/prac9_3/urls.py
+```
+
+- Now we will add the following code to the `urls.py` file
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('form/', views.form, name='form'),
+    path('formData/', views.formData, name='formData'),
+]
+```
+
+### 9.8. Adding the URL to the project's URL file
+
+```python
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('prac9_1/', include('apps.prac9_1.urls')),
+    path('prac9_2/', include('apps.prac9_2.urls')),
+    path('prac9_3/', include('apps.prac9_3.urls')),
+    path('admin/', admin.site.urls),
+]
+```
+
+### 9.9. Running the server
+
+```bash
+python manage.py runserver
+```
+
+- Go to `http://127.0.0.1:8000/prac9_3/form/` and fill out the form
+
+[form](assets/prac9_3_form.png)
+
+- After submitting the form you should see the output
+
+[form data](assets/prac9_3_form_redirect.png)
+
+<!-- END OF PRAC9_3 -->
+
+## Practical 9.4
+
+### 9.1. Creating prac9_4 app
+
+```bash
+mkdir apps/prac9_4
+django-admin startapp prac9_4 apps/prac9_4
+```
+
+### 9.2. Adding the app to the project
+
+```python
+INSTALLED_APPS = [
+    'prac9_1',
+    'prac9_2',
+    'prac9_3',
+    'prac9_4',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles'
+]
+```
+
+### 9.3. Creating a template base.html from prac9_2
+
+```bash
+mkdir apps/prac9_4/templates
+cp apps/prac9_2/templates/base.html apps/prac9_4/templates/base.html
+```
+
+### 9.4. Creating a model for file upload
+
+- We will create a model called `FileUpload` that will store the file name and the file itself. Go to `prac9_4/models.py` and add the following code
+
+```python
+from django.db import models
+
+# Create your models here.
+class FileUpload(models.Model):
+    name = models.CharField(max_length=100)
+    file = models.FileField(upload_to='uploads/')
+
+    def __str__(self):
+        return self.name
 ```

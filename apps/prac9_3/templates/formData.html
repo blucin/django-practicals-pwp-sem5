@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %} 
+    Form Data Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Form Data Page</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in formdata %}
+                <tr>
+                    <td>{{ data.username }}</td>
+                    <td>{{ data.email }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

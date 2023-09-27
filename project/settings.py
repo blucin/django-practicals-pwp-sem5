@@ -37,6 +37,8 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'prac9_1',
     'prac9_2',
+    'prac9_3',
+    'prac9_4',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
