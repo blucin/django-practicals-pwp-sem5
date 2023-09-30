@@ -115,7 +115,7 @@ class Product(models.Model):
 
 ```python
 from django.contrib import admin
-from .models import Product
+from prac9_1.models import Product
 
 # Register your models here.
 admin.site.register(Product)
@@ -542,13 +542,13 @@ INSTALLED_APPS = [
 
 ### 9.3. Create a model for the form
 
-- We will create a model called `FormData` that will store the username and email of the user. Go to `prac9_3/models.py` and add the following code
+- We will create a model called `FormSchema` that will store the username and email of the user. Go to `apps/prac9_3/models.py` and add the following code
 
 ```python
 from django.db import models
 
 # Create your models here.
-class FormData(models.Model):
+class FormSchema(models.Model):
     username = models.CharField(max_length=100)
     email = models.EmailField()
 
@@ -560,16 +560,16 @@ class FormData(models.Model):
 
 ```python
 from django.contrib import admin
-from .models import FormData
+from prac9_3.models import FormSchema
 
 # Register your models here.
-admin.site.register(FormData)
+admin.site.register(FormSchema)
 ```
 
 ### 9.5. Make and run migrations
 
 ```bash
-python manage.py makemigrations
+python manage.py makemigrations prac9_3
 python manage.py migrate
 ```
 
@@ -602,10 +602,6 @@ touch apps/prac9_3/templates/form.html
     <form action="{% url 'formData' %}" method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username">
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email">
         <input type="submit" value="Submit">
     </form>
 {% endblock %}
@@ -641,18 +637,18 @@ touch apps/prac9_3/templates/form.html
 {% endblock %}
 ```
 
-### 9.5. Create a `form.py` file
+### 9.5. Create a `forms.py` file
 
 ```bash
-touch apps/prac9_3/form.py
+touch apps/prac9_3/forms.py
 ```
 
-- Now we will add the following code to the `form.py` file to create a form
+- Now we will add the following code to the `forms.py` file to create a form
 
 ```python
 from django import forms
 
-class FormDataForm(forms.Form):
+class simpleForm(forms.Form):
     username = forms.CharField(max_length=100)
     email = forms.EmailField()
 ```
@@ -661,9 +657,9 @@ class FormDataForm(forms.Form):
 
 ```python
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
-from .form import FormDataForm
-from .models import FormData
+from django.http import HttpResponseRedirect
+from .forms import simpleForm
+from prac9_3.models import FormSchema
 
 # Create your views here.
 def index(request):
@@ -671,25 +667,25 @@ def index(request):
 
 def form(request):
     if request.method == 'POST':
-        form = FormDataForm(request.POST)
+        form = simpleForm(request.POST)
         if form.is_valid():
             form.save()
             return HttpResponseRedirect('/prac9_3/formData/')
     else:
-        form = FormDataForm()
+        form = simpleForm()
     return render(request, 'form.html', {'form': form})
 
 def formData(request):
     if request.method == 'POST':
-        form = FormDataForm(request.POST)
+        form = simpleForm(request.POST)
         if form.is_valid():
             username = form.cleaned_data['username']
             email = form.cleaned_data['email']
-            FormData.objects.create(username=username, email=email)
+            FormSchema.objects.create(username=username, email=email)
             return HttpResponseRedirect('/prac9_3/formData/')
     else:
-        form = FormDataForm()
-    return render(request, 'formData.html', {'formdata': FormData.objects.all()})
+        form = simpleForm()
+    return render(request, 'formData.html', {'formdata': FormSchema.objects.all()})
 ```
 
 ### 9.7. Creating a URL in prac9_3/urls.py
@@ -735,11 +731,21 @@ python manage.py runserver
 
 - Go to `http://127.0.0.1:8000/prac9_3/form/` and fill out the form
 
-[form](assets/prac9_3_form.png)
+![form](assets/prac9_3_form.png)
 
 - After submitting the form you should see the output
 
-[form data](assets/prac9_3_form_redirect.png)
+![form data](assets/prac9_3_form_redirect.png)
+
+- You can also view the changes made on the admin panel. For that, you have to create a user first.
+
+```bash
+python manage.py createsuperuser
+```
+
+- Now go to `http://127.0.0.1:8000/admin/` and login with the credentials you just created. You should see the following page
+
+![admin panel](assets/prac9_3_admin.png)
 
 <!-- END OF PRAC9_3 -->
 
@@ -776,18 +782,14 @@ mkdir apps/prac9_4/templates
 cp apps/prac9_2/templates/base.html apps/prac9_4/templates/base.html
 ```
 
-### 9.4. Creating a model for file upload
+### 9.4. Specify media folder location in settings.py
 
-- We will create a model called `FileUpload` that will store the file name and the file itself. Go to `prac9_4/models.py` and add the following code
+- Media folder is used to store user uploaded files. We will specify the location of the media folder in `settings.py`
 
 ```python
-from django.db import models
+# path for serving media files
+MEDIA_URL = '/media/'
 
-# Create your models here.
-class FileUpload(models.Model):
-    name = models.CharField(max_length=100)
-    file = models.FileField(upload_to='uploads/')
-
-    def __str__(self):
-        return self.name
+# path for storing media files
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 ```
