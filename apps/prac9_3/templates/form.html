@@ -8,10 +8,7 @@
     <h1>Form Page</h1>
     <form action="{% url 'formData' %}" method="post">
         {% csrf_token %}
-        <label for="username">Username:</label>
-        <input type="text" name="username" id="username">
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email">
+        {{ form.as_p }}
         <input type="submit" value="Submit">
     </form>
 {% endblock %}
