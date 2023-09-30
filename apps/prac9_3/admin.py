@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import FormData
+from .models import formSchema
 
 # Register your models here.
-admin.site.register(FormData)
+admin.site.register(formSchema)
