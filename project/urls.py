@@ -16,10 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('prac9_1/', include('apps.prac9_1.urls')),
     path('prac9_2/', include('apps.prac9_2.urls')),
     path('prac9_3/', include('apps.prac9_3.urls')),
+    path('prac9_4/', include('apps.prac9_4.urls')),
     path('admin/', admin.site.urls),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
