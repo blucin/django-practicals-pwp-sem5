@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Uploaded files</h2>
+  <ul>
+    {% for file in files %}
+      <li><a href="/media/{{ MEDIA_URL }}{{ file.file }}">{{ file.fileName }}</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}

@@ -1,30 +1,30 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
-from .form import FormDataForm
-from .models import FormData
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from .forms import uploadFileForm
+from prac9_4.models import fileFormSchema
 
 # Create your views here.
 def index(request):
     return render(request, 'index.html')
 
-def form(request):
+def fileForm(request):
     if request.method == 'POST':
-        form = FormDataForm(request.POST)
+        form = uploadFileForm(request.POST, request.FILES)
         if form.is_valid():
+            fileName = form.cleaned_data['fileName']
+            file = form.cleaned_data['file']
+            # write file to MEDIA_ROOT in chunks to prevent memory issues
+            with open(settings.MEDIA_ROOT + fileName, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+            # save file details to database
             form.save()
-            return HttpResponseRedirect('/prac9_3/formData/')
+            return HttpResponseRedirect('/prac9_4/fileFormData/')
     else:
-        form = FormDataForm()
-    return render(request, 'form.html', {'form': form})
+        form = uploadFileForm()
+    return render(request, 'fileForm.html', {'form': form})
 
-def formData(request):
-    if request.method == 'POST':
-        form = FormDataForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            email = form.cleaned_data['email']
-            FormData.objects.create(username=username, email=email)
-            return HttpResponseRedirect('/prac9_3/formData/')
-    else:
-        form = FormDataForm()
-    return render(request, 'formData.html', {'formdata': FormData.objects.all()})
+def fileFormData(request):
+    files = fileFormSchema.objects.all()
+    return render(request, 'fileFormData.html', {'files': files})
