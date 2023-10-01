@@ -793,3 +793,162 @@ MEDIA_URL = '/media/'
 # path for storing media files
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 ```
+
+- Now we will create a folder called `media` in the project directory with an `uploads` folder inside it.
+
+```bash
+mkdir media
+mkdir media/uploads
+```
+
+### 9.5. Creating a model for the form
+
+- We will create a model called `fileFormSchema` that will store user files. Go to `apps/prac9_4/models.py` and add the following code
+
+```python
+from django.db import models
+
+# Create your models here.
+from django.db import models
+
+# Create your models here.
+class fileFormSchema(models.Model):
+    fileName = models.CharField(max_length=100)
+    file = models.FileField(upload_to='uploads/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.fileName
+```
+
+### 9.6. Registering the model in prac9_4/admin.py
+
+```python
+from django.contrib import admin
+from prac9_4.models import fileFormSchema
+
+# Register your models here.
+admin.site.register(fileFormSchema)
+```
+
+### 9.7. Make and run migrations
+
+```bash
+python manage.py makemigrations prac9_4
+python manage.py migrate
+```
+
+### 9.8. Creating a forms.py file
+
+```bash
+touch apps/prac9_4/forms.py
+```
+
+- Now we will add the following code to the `forms.py` file to create a form
+
+```python
+from django import forms
+from prac9_4.models import fileFormSchema
+
+class uploadFileForm(forms.ModelForm):
+    class Meta:
+        model = fileFormSchema
+        fields = ['fileName', 'file']
+```
+
+### 9.9. Creating a view in prac9_4/views.py
+
+```python
+from django.shortcuts import render
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from .forms import uploadFileForm
+from prac9_4.models import fileFormSchema
+
+# Create your views here.
+def index(request):
+    return render(request, 'index.html')
+
+def fileForm(request):
+    if request.method == 'POST':
+        form = uploadFileForm(request.POST, request.FILES)
+        if form.is_valid():
+            fileName = form.cleaned_data['fileName']
+            file = form.cleaned_data['file']
+            # write file to MEDIA_ROOT in chunks to prevent memory issues
+            with open(settings.MEDIA_ROOT + fileName, 'wb+') as destination:
+                for chunk in file.chunks():
+                    destination.write(chunk)
+            # save file details to database
+            form.save()
+            return HttpResponseRedirect('/prac9_4/fileFormData/')
+    else:
+        form = uploadFileForm()
+    return render(request, 'fileForm.html', {'form': form})
+
+def fileFormData(request):
+    files = fileFormSchema.objects.all()
+    return render(request, 'fileFormData.html', {'files': files})
+```
+
+### 9.10. Creating a URL in prac9_4/urls.py
+
+- We will create a URL file for the prac9_4 app
+
+```bash
+touch apps/prac9_4/urls.py
+```
+
+- Now we will add the following code to the `urls.py` file
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('fileForm/', views.fileForm, name='fileForm'),
+    path('fileFormData/', views.fileFormData, name='fileFormData'),
+]
+```
+
+### 9.11. Adding the URL to the project's URL file
+
+```python
+from django.contrib import admin
+from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('prac9_1/', include('apps.prac9_1.urls')),
+    path('prac9_2/', include('apps.prac9_2.urls')),
+    path('prac9_3/', include('apps.prac9_3.urls')),
+    path('prac9_4/', include('apps.prac9_4.urls')),
+    path('admin/', admin.site.urls),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+### 9.12. Running the server
+
+```bash
+python manage.py runserver
+```
+
+- Go to `http://localhost:8000/prac9_4/fileForm/` and upload a file
+
+![file form](assets/prac9_4_form.png)
+
+- It will redirect you to `http://localhost:8000/prac9_4/fileFormData/` and you should see the uploaded file links
+
+![file form data](assets/prac9_4_form_redirect.png)
+
+- A sample file uploaded will look like this
+
+![file form data](assets/prac9_4_form_sample_image.png)
+
+- You can also check the entry of it in the admin panel
+
+![file form data](assets/prac9_4_admin.png)
+
+<!-- END OF PRAC9_4 -->
