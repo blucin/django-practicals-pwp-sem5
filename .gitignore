@@ -4,7 +4,7 @@
 *.pyc
 __pycache__
 db.sqlite3
-media
+media/uploads/*
 **/migrations/**
 
 # Backup files # 
@@ -26,3 +26,6 @@ venv.bak/
 !.vscode/launch.json 
 !.vscode/extensions.json 
 .history
+
+# files with prefix media #
+media*
