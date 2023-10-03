@@ -952,3 +952,407 @@ python manage.py runserver
 ![file form data](assets/prac9_4_admin.png)
 
 <!-- END OF PRAC9_4 -->
+
+## Practical 9.5
+
+### 9.1. Creating prac9_5 app
+
+```bash
+mkdir apps/prac9_5
+django-admin startapp prac9_5 apps/prac9_5
+```
+
+### 9.2. Adding the app to the project
+
+```python
+INSTALLED_APPS = [
+    'prac9_1',
+    'prac9_2',
+    'prac9_3',
+    'prac9_4',
+    'prac9_5',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles'
+]
+```
+
+### 9.3. Creating a template base.html from prac9_2
+
+```bash
+mkdir apps/prac9_5/templates
+cp apps/prac9_2/templates/base.html apps/prac9_5/templates/base.html
+```
+
+### 9.4. Configuring postgresql database
+
+- We will be using postgresql database for this practical. We will install postgresql and create a database called `prac9_5_db`. Follow the below steps to create a user and db in postgresql, also configure it to work with django.
+
+```bash
+~ 
+➜ sudo -u postgres psql
+postgres=# CREATE DATABASE prac9_5_db;
+postgres=# CREATE USER django_prac9_5 WITH ENCRYPTED PASSWORD 'passw0rd';
+postgres=# ALTER ROLE django_prac9_5 SET client_encoding TO 'utf8';
+postgres=# ALTER ROLE django_prac9_5 SET default_transaction_isolation TO 'read committed';
+postgres=# ALTER ROLE django_prac9_5 SET timezone TO 'UTC';
+postgres=# GRANT ALL PRIVILEGES ON DATABASE prac9_5_db TO django_prac9_5;
+postgres=# ALTER DATABASE prac9_5_db OWNER TO django_prac9_5; (optional step might fix some errors)
+postgres=# \q
+```
+
+
+### 9.5. Add postgresql database to settings.py
+
+- This practical requires a postgresql database. We will add the database details to `settings.py`
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    'db_prac9_5': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'prac9_5_db',
+        'USER': 'django_prac9_5',
+        'PASSWORD': 'passw0rd',
+        'HOST': 'localhost',
+        'PORT': '',
+    },
+}
+```
+
+### 9.6. Creating a database router in prac9_5/routers.py
+
+- We will create a database router to route all the queries to the `prac9_5_db` database
+
+```bash
+touch apps/prac9_5/routers.py
+```
+
+- Now we will add the following code to the `routers.py` file
+
+```python
+# DB router for prac9_5
+class prac9_5Router(object):
+    """
+    A router to control db operations
+    """
+    route_app_labels = {'prac9_5'}
+    db_name = 'prac9_5_db'
+
+    def db_for_read(self, model, **hints):
+        """
+        Attempts to read auth and contenttypes models go to self.db_name.
+        """
+        if model._meta.app_label in self.route_app_labels:
+            return self.db_name
+        return None
+
+    def db_for_write(self, model, **hints):
+        """
+        Attempts to write auth and contenttypes models go to self.db_name.
+        """
+        if model._meta.app_label in self.route_app_labels:
+            return self.db_name
+        return None
+
+    def allow_relation(self, obj1, obj2, **hints):
+        """
+        Allow relations if a model in the auth or contenttypes apps is
+        involved.
+        """
+        if (
+            obj1._meta.app_label in self.route_app_labels or
+            obj2._meta.app_label in self.route_app_labels
+        ):
+           return True
+        return None
+
+    def allow_migrate(self, db, app_label, model_name=None, **hints):
+        """
+        Make sure the auth and contenttypes apps only appear in the
+        self.db_name database.
+        """
+        if app_label in self.route_app_labels:
+            return db == self.db_name
+        return None
+```
+
+### 9.7. Adding the router to settings.py
+
+- Now we will add the router to `settings.py`
+
+```python
+# Database router settings
+# https://docs.djangoproject.com/en/4.2/topics/db/multi-db/#database-routers
+# read more about database routers here: 
+# https://stackoverflow.com/questions/13756356/different-databases-for-different-apps-in-django
+
+DATABASE_ROUTERS = ['apps.prac9_5.routers.prac9_5Router']
+```
+
+### 9.8. Creating a model for the form
+
+- We are creating an authentication system for this practical. We will create a model called `User` that will store the user details. Go to `apps/prac9_5/models.py` and add the following code
+
+```python
+from django.db import models
+
+# Create your models here.
+class User(models.Model):
+    username = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
+    email = models.EmailField()
+
+    def __str__(self):
+        return self.username
+    
+    class Meta:
+        app_label = 'prac9_5'
+```
+
+### 9.9. Registering the model in prac9_5/admin.py
+
+```python
+from django.contrib import admin
+from prac9_5.models import User
+
+# Register your models here.
+admin.site.register(User)
+```
+
+### 9.10. Make and run migrations
+
+```bash
+python manage.py makemigrations prac9_5
+python manage.py migrate --database=prac9_5_db
+```
+
+- You will see the following table (or more because django migrates some tables by default) in the database
+
+![pgadmin prac9_5_db table list](assets/prac9_5_pgadminTable.png)
+
+### 9.11. Creating a form for create account and login 
+
+- We will create 2 forms, one for creating an account and another for logging in. Go to `apps/prac9_5/forms.py` and add the following code
+
+```python
+from django import forms
+from prac9_5.models import User
+
+class createAccountForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'password', 'email']
+
+class loginForm(forms.Form):
+    username = forms.CharField(max_length=100)
+    password = forms.CharField(max_length=100)
+```
+
+### 9.12. Creating a create account and login templates
+
+- Copy base template from prac9_2
+
+```bash
+cp apps/prac9_2/templates/base.html apps/prac9_5/templates/base.html
+```
+
+- We will create a template called `createAccount.html` that will extend the base template
+
+```bash
+touch apps/prac9_5/templates/createAccount.html
+```
+
+- Now we will add the following code to the `createAccount.html` file
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Create Account Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Create Account Page</h1>
+    <form action="{% url 'createAccount' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Submit">
+    </form>
+{% endblock %}
+```
+
+- Now create a template called `login.html` that will extend the base template
+
+```bash
+touch apps/prac9_5/templates/login.html
+```
+
+- Now we will add the following code to the `login.html` file
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Login Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Login Page</h1>
+    <form action="{% url 'login' %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Submit">
+    </form>
+{% endblock %}
+```
+
+- Now we will create login success and login fail templates
+
+```bash
+touch apps/prac9_5/templates/loginSuccess.html
+touch apps/prac9_5/templates/loginFail.html
+```
+
+- Now we will add the following code to the `loginSuccess.html` file
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Login Success Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Login Success Page</h1>
+{% endblock %}
+```
+
+- Now we will add the following code to the `loginFail.html` file
+
+```html
+{% extends "base.html" %}
+
+{% block title %} 
+    Login Fail Page 
+{% endblock %}
+
+{% block content %}
+    <h1>Login Fail Page</h1>
+{% endblock %}
+```
+
+### 9.13. Creating a view in prac9_5/views.py
+
+```python
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from .forms import createAccountForm, loginForm
+from prac9_5.models import User
+
+# Create your views here.
+def index(request):
+    return render(request, 'index.html')
+
+def createAccount(request):
+    if request.method == 'POST':
+        form = createAccountForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect('/prac9_5/login/')
+    else:
+        form = createAccountForm()
+    return render(request, 'createAccount.html', {'form': form})
+
+def login(request):
+    if request.method == 'POST':
+        form = loginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            try:
+                user = User.objects.get(username=username, password=password)
+                return HttpResponseRedirect('/prac9_5/loginSuccess/')
+            except User.DoesNotExist:
+                return HttpResponseRedirect('/prac9_5/loginFail/')
+    else:
+        form = loginForm()
+    return render(request, 'login.html', {'form': form})
+
+def loginSuccess(request):
+    return render(request, 'loginSuccess.html')
+
+def loginFail(request):
+    return render(request, 'loginFail.html')
+```
+
+### 9.14. Creating a URL in prac9_5/urls.py
+
+- We will create a URL file for the prac9_5 app
+
+```bash
+touch apps/prac9_5/urls.py
+```
+
+- Now we will add the following code to the `urls.py` file
+
+```python
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.index, name='index'),
+    path('createAccount/', views.createAccount, name='createAccount'),
+    path('login/', views.login, name='login'),
+    path('loginSuccess/', views.loginSuccess, name='loginSuccess'),
+    path('loginFail/', views.loginFail, name='loginFail'),
+]
+```
+
+### 9.15. Adding the URL to the project's URL file
+
+```python
+from django.contrib import admin
+from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('prac9_1/', include('apps.prac9_1.urls')),
+    path('prac9_2/', include('apps.prac9_2.urls')),
+    path('prac9_3/', include('apps.prac9_3.urls')),
+    path('prac9_4/', include('apps.prac9_4.urls')),
+    path('prac9_5/', include('apps.prac9_5.urls')),
+    path('admin/', admin.site.urls),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+```
+
+### 9.16. Running the server
+
+```bash
+python manage.py runserver
+```
+
+- Now go to `http://localhost:8000/prac9_5/createAccount/` and create an account
+
+![create account](assets/prac9_5_createAccount.png)
+
+- Now go to `http://localhost:8000/prac9_5/login/` and try to login with false credentials
+
+![login fail](assets/prac9_5_incorrectLogin.png)
+![login fail page](assets/prac9_5_incorrectLoginRedirect.png)
+
+- Now go to `http://localhost:8000/prac9_5/login/` and try to login with correct credentials
+
+![login success](assets/prac9_5_correctLogin.png)
+![login success page](assets/prac9_5_correctLoginRedirect.png)
+
+- You can also check the entry of it in the pgadmin panel
+
+![pgadmin prac9_5_db table list](assets/prac9_5_pgadminResult.png)

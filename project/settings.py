@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'prac9_2',
     'prac9_3',
     'prac9_4',
+    'prac9_5',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -85,8 +86,23 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    'prac9_5_db': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'prac9_5_db',
+        'USER': 'django_prac9_5',
+        'PASSWORD': 'passw0rd',
+        'HOST': 'localhost',
+        'PORT': '',
+    },
 }
+
+# Database router settings
+# https://docs.djangoproject.com/en/4.2/topics/db/multi-db/#database-routers
+# read more about database routers here: 
+# https://stackoverflow.com/questions/13756356/different-databases-for-different-apps-in-django
+
+DATABASE_ROUTERS = ['apps.prac9_5.routers.prac9_5Router']
 
 
 # Password validation

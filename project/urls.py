@@ -24,5 +24,6 @@ urlpatterns = [
     path('prac9_2/', include('apps.prac9_2.urls')),
     path('prac9_3/', include('apps.prac9_3.urls')),
     path('prac9_4/', include('apps.prac9_4.urls')),
+    path('prac9_5/', include('apps.prac9_5.urls')),
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
