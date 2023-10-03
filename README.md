@@ -7,10 +7,10 @@
 -->
 
 ## Installation 
-1. Create a virtual environment
+1. Create a virtual environment (WARNING: This step depends on your shell)
 ```bash
 python -m venv env
-.\env\Scripts\Activate.ps1
+source env/bin/activate.fish
 ```
 
 2. Install from requirements.txt
