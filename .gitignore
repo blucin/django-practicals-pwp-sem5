@@ -29,3 +29,6 @@ venv.bak/
 
 # files with prefix media #
 media*
+
+# ignore temp folder for creating pdfs #
+temp
