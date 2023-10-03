@@ -1,8 +1,8 @@
-# Python and Web Programming Practicals
+# Python and Web Programming Practical 9
 
 <!-- metadata (use pandoc) 
 % title: Python and Web Programming Practical 9
-% author: Akshar Patel (12102110501003) CSE-IoT Batch As
+% author: Akshar Patel (12102110501003) CSE-IoT Batch A
 % date: September 28, 2023
 -->
 
