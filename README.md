@@ -9,8 +9,12 @@
 ## Installation 
 1. Create a virtual environment (WARNING: This step depends on your shell)
 ```bash
-python -m venv env
-source env/bin/activate.fish
+python -m venv .venv
+# Only run one of the following commands
+.venv/bin/activate.ps1              # For PowerShell
+.venv/bin/activate                  # For Bash
+.venv/Scripts/activate.bat          # For CMD
+source .venv/Scripts/activate.fish  # For Fish
 ```
 
 2. Install from requirements.txt
